@@ -1,0 +1,8 @@
+# Kredensial database lokal — JANGAN pernah commit file ini.
+# Salin dari config.example.php lalu isi kredensial asli Anda.
+config.php
+
+# File OS/editor umum
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,0 +1,334 @@
+/* ============================================================
+   style.css — SPK Kualitas Air | Depot Isi Ulang
+   Pisahkan dari <style> di index.html (baris 41–267)
+   ============================================================ */
+
+/* ── Inisialisasi tema secepat mungkin (sebelum render) ── */
+html { color-scheme: dark; }
+html.light { color-scheme: light; }
+
+/* ── DARK MODE tokens ── */
+:root, html.dark {
+  --bg-page:        #0A0F1E;
+  --bg-card:        #111827;
+  --bg-card-inner:  #0A0F1E;
+  --bg-header:      rgba(10,15,30,0.88);
+  --border-main:    #1A2235;
+  --border-soft:    #243048;
+  --dot-color:      #1E2A40;
+
+  --text-primary:   #F9FAFB;
+  --text-secondary: #94A3B8;
+  --text-muted:     #475569;
+  --text-faint:     #334155;
+
+  --input-bg:       #0A0F1E;
+  --input-border:   #243048;
+  --input-focus:    rgba(0,212,180,0.35);
+  --slider-track:   #243048;
+  --slider-thumb-border: #0A0F1E;
+
+  --scrollbar-track: #111827;
+  --scrollbar-thumb: #243048;
+
+  --shimmer-light: #F9FAFB;
+}
+
+/* ── LIGHT MODE tokens ── */
+html.light {
+  --bg-page:        #F0F4F8;
+  --bg-card:        #FFFFFF;
+  --bg-card-inner:  #F8FAFC;
+  --bg-header:      rgba(255,255,255,0.90);
+  --border-main:    #E2E8F0;
+  --border-soft:    #CBD5E1;
+  --dot-color:      #CBD5E1;
+
+  --text-primary:   #0F172A;
+  --text-secondary: #475569;
+  --text-muted:     #94A3B8;
+  --text-faint:     #CBD5E1;
+
+  --input-bg:       #F8FAFC;
+  --input-border:   #CBD5E1;
+  --input-focus:    rgba(0,172,144,0.25);
+  --slider-track:   #CBD5E1;
+  --slider-thumb-border: #FFFFFF;
+
+  --scrollbar-track: #E2E8F0;
+  --scrollbar-thumb: #94A3B8;
+
+  --shimmer-light: #0F172A;
+}
+
+/* ── Base styles (CSS-var-driven) ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+  background-size: 28px 28px;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+/* ── Komponen theming via CSS vars ── */
+.t-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  transition: background 0.35s ease, border-color 0.35s ease, transform 0.2s ease;
+}
+.t-card:hover { transform: translateY(-2px); }
+
+.t-card-inner {
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border-main);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.t-divider {
+  height: 1px;
+  background: var(--border-main);
+  transition: background 0.35s ease;
+}
+
+.t-header {
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-main);
+  backdrop-filter: blur(16px);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.t-text-primary   { color: var(--text-primary);   transition: color 0.35s ease; }
+.t-text-secondary { color: var(--text-secondary);  transition: color 0.35s ease; }
+.t-text-muted     { color: var(--text-muted);      transition: color 0.35s ease; }
+.t-text-faint     { color: var(--text-faint);      transition: color 0.35s ease; }
+
+.t-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+  transition: background 0.35s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.t-input::placeholder { color: var(--text-muted); }
+.t-input:focus {
+  outline: none;
+  border-color: #00D4B4;
+  box-shadow: 0 0 0 3px var(--input-focus);
+}
+
+/* ── Slider ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--slider-track);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.35s ease;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00D4B4;
+  border: 3px solid var(--slider-thumb-border);
+  box-shadow: 0 0 10px rgba(0,212,180,0.5);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 18px rgba(0,212,180,0.75);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00D4B4;
+  border: 3px solid var(--slider-thumb-border);
+  cursor: pointer;
+}
+
+/* Number input tanpa spinner */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: none; }
+
+/* Progress bar */
+.bar-track {
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--border-main);
+  overflow: hidden;
+  position: relative;
+  transition: background 0.35s ease;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bar-tick-label { color: var(--text-faint); transition: color 0.35s ease; }
+
+/* Pulse dot */
+@keyframes ping-slow { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.45)} }
+.ping-slow { animation: ping-slow 2s ease-in-out infinite; }
+
+/* Shimmer di status card */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, var(--shimmer-light) 25%, #00D4B4 50%, var(--shimmer-light) 75%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Theme Toggle Button ── */
+#theme-toggle {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card-inner);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+#theme-toggle:hover { transform: scale(1.08); }
+#theme-toggle:active { transform: scale(0.95); }
+
+/* Ikon matahari/bulan flip */
+#icon-sun, #icon-moon {
+  position: absolute;
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* DARK mode → tampilkan matahari (ajak switch ke light) */
+html.dark  #icon-sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+html.dark  #icon-moon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+/* LIGHT mode → tampilkan bulan (ajak switch ke dark) */
+html.light #icon-sun  { opacity: 0; transform: rotate(90deg) scale(0.5); }
+html.light #icon-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+/* ── Bar track light mode override ── */
+html.light .bar-track { background: #E2E8F0; }
+
+/* ══════════════════════════════════════════════════════════
+   FITUR TAMBAHAN — Toast, Modal, Toggle, Gauge, Badge
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Toast Notification ── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(24px) scale(0.96); }
+}
+.toast-item {
+  pointer-events: auto;
+  min-width: 240px;
+  max-width: 340px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  color: var(--text-primary);
+  animation: toastIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toast-item.toast-out { animation: toastOut 0.2s ease forwards; }
+.toast-item.toast-success { border-color: rgba(34,197,94,0.4); }
+.toast-item.toast-error   { border-color: rgba(239,68,68,0.4); }
+.toast-item.toast-warn    { border-color: rgba(234,179,8,0.4); }
+.toast-item.toast-info    { border-color: rgba(0,212,180,0.4); }
+
+/* ── Modal Konfirmasi ── */
+#confirm-modal.flex { display: flex; }
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Toggle Switch (Live Preview) ── */
+#live-preview-toggle:checked ~ #live-toggle-track,
+#live-toggle-track.active {
+  background: #00D4B4 !important;
+}
+#live-toggle-thumb.active {
+  transform: translateX(16px);
+}
+
+/* ── Weight Sliders (thinner) ── */
+#weight-ph-slider::-webkit-slider-thumb,
+#weight-tds-slider::-webkit-slider-thumb,
+#weight-turb-slider::-webkit-slider-thumb {
+  width: 14px; height: 14px;
+}
+
+/* ── Gauge Needle ── */
+#gauge-needle { transform: rotate(-90deg); }
+
+/* ── Count-up number pulse on update ── */
+@keyframes valuePulse {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.value-pulse { animation: valuePulse 0.4s ease; }
+
+/* ── Streak Badge Glow ── */
+@keyframes badgeGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(234,179,8,0); }
+  50%      { box-shadow: 0 0 12px rgba(234,179,8,0.5); }
+}
+.streak-active { animation: badgeGlow 1.8s ease-in-out infinite; }
+
+/* ── Loading Skeleton Shimmer ── */
+@keyframes skeletonShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+.skeleton-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,212,180,0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 0.9s linear infinite;
+}
+
+/* ── Highlight baris filter kosong ── */
+.filter-empty-row td {
+  text-align: center;
+  padding: 24px !important;
+  color: var(--text-faint);
+  font-style: italic;
+}
