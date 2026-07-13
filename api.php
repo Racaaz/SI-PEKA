@@ -263,7 +263,10 @@ if ($method === "POST" && $action === "bobot") {
    Anda sudah ada — endpoint ini menjaga fitur itu tetap berfungsi setelah
    migrasi ke MySQL. Hapus blok ini jika tidak ingin menyediakannya. */
 if ($method === "POST" && $action === "reset_history") {
-    $pdo->exec("DELETE FROM riwayat_pemeriksaan");
+    // TRUNCATE menghapus seluruh baris SEKALIGUS mengembalikan AUTO_INCREMENT
+    // ke 1 — beda dengan DELETE yang cuma menghapus isi baris tanpa
+    // mereset penghitung id_pemeriksaan.
+    $pdo->exec("TRUNCATE TABLE riwayat_pemeriksaan");
     respond(["success" => true, "message" => "Seluruh riwayat berhasil dihapus."]);
 }
 
