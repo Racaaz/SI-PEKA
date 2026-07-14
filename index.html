@@ -59,6 +59,105 @@
 
 <body class="font-sans min-h-screen">
 
+  <!-- ═══════════════════════════════════════════════════
+       ROLE SELECT SCREEN — Gerbang sebelum masuk dashboard
+       2 peran: Admin (perlu login) & Masyarakat (tanpa login,
+       hanya lihat + simulasi Live Preview).
+  ═══════════════════════════════════════════════════ -->
+  <div id="role-select-screen" class="min-h-screen flex flex-col">
+
+    <!-- Mini header khusus layar pilih peran -->
+    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-5 max-w-5xl mx-auto w-full">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(0,212,180,0.15);border:1px solid rgba(0,212,180,0.3);">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C12 2 5 9.5 5 14a7 7 0 0014 0C19 9.5 12 2 12 2z" fill="#00D4B4" opacity=".9"/>
+            <path d="M9 15a3 3 0 003 3" stroke="var(--bg-page)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-[10px] font-mono text-cyan uppercase tracking-[0.2em] leading-none mb-0.5 opacity-80">SPK · Weighted Product</p>
+          <h1 class="text-sm sm:text-base font-semibold t-text-primary leading-tight truncate">Monitoring Kualitas Air Depot Isi Ulang</h1>
+        </div>
+      </div>
+      <button id="theme-toggle-landing" type="button" aria-label="Toggle dark/light mode" title="Ganti tema"
+        class="relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer flex-shrink-0"
+        style="border:1px solid var(--border-soft); background:var(--bg-card-inner);">
+        <svg id="icon-sun-landing" class="w-5 h-5 text-cyan absolute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"/>
+          <path stroke-linecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg id="icon-moon-landing" class="w-5 h-5 t-text-secondary absolute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Konten pemilihan peran -->
+    <div class="flex-1 flex items-center justify-center px-4 py-8">
+      <div class="w-full max-w-3xl">
+        <div class="text-center mb-10">
+          <span class="inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest text-cyan mb-4" style="background:rgba(0,212,180,0.1);border:1px solid rgba(0,212,180,0.25);">Selamat Datang</span>
+          <h2 class="text-2xl sm:text-3xl font-bold t-text-primary mb-3">Masuk sebagai siapa?</h2>
+          <p class="text-sm t-text-secondary max-w-md mx-auto">Pilih peran untuk melanjutkan ke dashboard SPK Kualitas Air metode Weighted Product.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <!-- Kartu: Masyarakat (tanpa login) -->
+          <button id="role-card-masyarakat" type="button" class="t-card rounded-2xl shadow-card p-6 text-left group transition-all duration-200">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:rgba(0,212,180,0.12);border:1px solid rgba(0,212,180,0.3);">
+              <svg class="w-6 h-6 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold t-text-primary mb-1.5">Masyarakat</h3>
+            <p class="text-xs t-text-secondary leading-relaxed mb-4">Pantau kualitas air &amp; coba simulasi kelayakan langsung lewat <strong class="text-cyan font-semibold">Live Preview</strong> — tanpa perlu login.</p>
+            <ul class="space-y-1.5 mb-5">
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-muted"><svg class="w-3.5 h-3.5 text-layak flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Lihat dashboard &amp; riwayat</li>
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-muted"><svg class="w-3.5 h-3.5 text-layak flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Simulasi hitung (Live Preview)</li>
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-faint"><svg class="w-3.5 h-3.5 text-bahaya flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>Tidak menyimpan ke database</li>
+            </ul>
+            <span class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-cyan">
+              Masuk sebagai Masyarakat
+              <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </span>
+          </button>
+
+          <!-- Kartu: Admin (perlu login) -->
+          <button id="role-card-admin" type="button" class="t-card rounded-2xl shadow-card p-6 text-left group transition-all duration-200">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);">
+              <svg class="w-6 h-6 text-waspada" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold t-text-primary mb-1.5">Admin</h3>
+            <p class="text-xs t-text-secondary leading-relaxed mb-4">Kelola data depot, bobot kriteria, dan riwayat pemeriksaan. Perlu <strong class="text-waspada font-semibold">username &amp; password</strong>.</p>
+            <ul class="space-y-1.5 mb-5">
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-muted"><svg class="w-3.5 h-3.5 text-layak flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Tambah &amp; kelola depot</li>
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-muted"><svg class="w-3.5 h-3.5 text-layak flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Simpan perhitungan ke riwayat</li>
+              <li class="flex items-center gap-2 text-[11px] font-mono t-text-muted"><svg class="w-3.5 h-3.5 text-layak flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Ubah bobot &amp; hapus riwayat</li>
+            </ul>
+            <span class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-waspada">
+              Login sebagai Admin
+              <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center pb-6">
+      <p class="text-[11px] font-mono t-text-faint">SPK Monitoring Kualitas Air · Politeknik Negeri Pontianak — Teknik Informatika 2026</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       APP SHELL — Dashboard (disembunyikan sampai peran dipilih)
+  ═══════════════════════════════════════════════════ -->
+  <div id="app-shell" class="hidden">
+
   <!-- ═══════════════════════════════════
        NAVBAR / HEADER
   ═══════════════════════════════════ -->
@@ -101,8 +200,53 @@
           <span class="text-layak text-[10px] font-mono">Live</span>
         </div>
 
+        <!-- ── BADGE PERAN AKTIF ── -->
+        <span id="role-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono t-text-secondary whitespace-nowrap" style="border:1px solid var(--border-soft);">
+          <svg id="role-badge-icon-masyarakat" class="w-3.5 h-3.5 text-cyan flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+          </svg>
+          <svg id="role-badge-icon-admin" class="hidden w-3.5 h-3.5 text-waspada flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+          </svg>
+          <span id="role-badge-label" class="hidden sm:inline">Masyarakat</span>
+        </span>
+        <button id="btn-switch-role" type="button" title="Ganti Peran"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-mono t-text-secondary hover:text-cyan transition-colors whitespace-nowrap"
+          style="border:1px solid var(--border-soft);">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          <span class="hidden sm:inline">Ganti Peran</span>
+        </button>
+
+        <!-- ── STATUS LOGIN ADMIN ── -->
+        <button id="btn-admin-login" type="button"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-mono t-text-secondary hover:text-cyan transition-colors whitespace-nowrap"
+          style="border:1px solid var(--border-soft);">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m0 0l4-4m-4 4l4 4m6-11h4a2 2 0 012 2v10a2 2 0 01-2 2h-4"/>
+          </svg>
+          <span class="hidden sm:inline">Login Admin</span>
+        </button>
+        <div id="admin-logged-info" class="hidden items-center gap-2">
+          <span class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono t-text-secondary" style="border:1px solid var(--border-soft);">
+            <svg class="w-3.5 h-3.5 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span id="admin-username-label">admin</span>
+          </span>
+          <button id="btn-admin-logout" type="button" title="Logout"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-mono t-text-secondary hover:text-bahaya transition-colors whitespace-nowrap"
+            style="border:1px solid var(--border-soft);">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+
         <!-- ── THEME TOGGLE ── -->
-        <button id="theme-toggle" aria-label="Toggle dark/light mode" title="Ganti tema">
+        <button id="theme-toggle" aria-label="Toggle dark/light mode" title="Ganti tema"
           <!-- Ikon Matahari (tampil saat dark mode) -->
           <svg id="icon-sun" class="w-5 h-5 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="4"/>
@@ -129,7 +273,7 @@
       <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      <span class="t-text-secondary">Mode simulasi — masukkan nilai sensor secara manual, lalu klik <strong class="text-cyan font-semibold">Hitung Kelayakan</strong> untuk mendapatkan skor Vektor V menggunakan metode Weighted Product.</span>
+      <span id="info-banner-text" class="t-text-secondary">Mode simulasi — masukkan nilai sensor secara manual, lalu klik <strong class="text-cyan font-semibold">Hitung Kelayakan</strong> untuk mendapatkan skor Vektor V menggunakan metode Weighted Product.</span>
     </div>
 
     <!-- Grid Utama -->
@@ -279,7 +423,7 @@
                   </span>
                   Depot yang Diuji
                 </label>
-                <button id="btn-open-depot-modal" type="button" class="text-[10px] font-mono text-cyan hover:underline underline-offset-2 whitespace-nowrap">
+                <button id="btn-open-depot-modal" type="button" class="admin-only-el text-[10px] font-mono text-cyan hover:underline underline-offset-2 whitespace-nowrap">
                   + Depot Baru
                 </button>
               </div>
@@ -288,7 +432,7 @@
               </select>
             </div>
 
-            <!-- ── Tombol Hitung ── -->
+            <!-- ── Tombol Hitung (khusus Admin — menyimpan ke database) ── -->
             <button id="btn-hitung" type="button"
               class="w-full py-4 rounded-xl font-semibold text-sm tracking-wide transition-all duration-200 active:scale-95"
               style="background:linear-gradient(135deg,#00D4B4 0%,#00A890 100%);color:#0A0F1E;box-shadow:0 0 20px rgba(0,212,180,0.3);">
@@ -299,6 +443,14 @@
                 Hitung Kelayakan
               </span>
             </button>
+
+            <!-- ── Info khusus role Masyarakat: arahkan ke Live Preview ── -->
+            <div id="masyarakat-hitung-note" class="hidden flex items-start gap-2.5 px-4 py-3 rounded-xl text-xs font-mono" style="background:rgba(0,212,180,0.06);border:1px solid rgba(0,212,180,0.18);">
+              <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="t-text-secondary">Mode Masyarakat: <strong class="text-cyan font-semibold">Live Preview</strong> aktif otomatis. Ubah nilai sensor di atas untuk melihat hasil simulasi kelayakan — tidak akan tersimpan ke database.</span>
+            </div>
 
             <div class="text-center">
               <button id="btn-reset" type="button" class="text-xs font-mono t-text-muted hover:text-cyan transition-colors underline underline-offset-2">
@@ -338,7 +490,7 @@
                 PDF
               </button>
               <button id="btn-reset-history" type="button"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all duration-200 active:scale-95"
+                class="admin-only-el flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all duration-200 active:scale-95"
                 style="background:rgba(239,68,68,0.1);color:#EF4444;border:1px solid rgba(239,68,68,0.3);">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -663,6 +815,8 @@
     </div>
   </footer>
 
+  </div><!-- /app-shell -->
+
 
   <!-- ═══════════════════════════════════════
        TOAST CONTAINER (pengganti alert())
@@ -725,6 +879,71 @@
         <div class="flex gap-2 justify-end pt-2">
           <button id="depot-modal-cancel" type="button" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold t-text-secondary t-card-inner" style="border:1px solid var(--border-soft);">Batal</button>
           <button type="submit" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold" style="background:linear-gradient(135deg,#00D4B4 0%,#00A890 100%);color:#0A0F1E;">Simpan Depot Baru</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL LOGIN ADMIN
+  ═══════════════════════════════════════════════════ -->
+  <div id="login-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.55);">
+    <div class="t-card rounded-2xl shadow-card w-full max-w-sm p-6" style="animation:modalPop 0.2s ease;">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(0,212,180,0.12);">
+            <svg class="w-5 h-5 text-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m0 0l4-4m-4 4l4 4m6-11h4a2 2 0 012 2v10a2 2 0 01-2 2h-4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold t-text-primary">Login Admin</h3>
+            <p id="login-modal-subtitle" class="text-[10px] font-mono t-text-faint mt-0.5">Login diperlukan untuk aksi ini</p>
+          </div>
+        </div>
+        <button id="login-modal-close" type="button" class="t-text-muted hover:text-cyan" aria-label="Tutup">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="login-form" class="space-y-3">
+        <div>
+          <label class="block text-xs font-mono t-text-secondary mb-1" for="login-username">Username</label>
+          <input id="login-username" name="username" type="text" required autocomplete="username"
+            placeholder="mis. admin"
+            class="t-input w-full px-3 py-2 rounded-lg font-mono text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono t-text-secondary mb-1" for="login-password">Password</label>
+          <div class="relative">
+            <input id="login-password" name="password" type="password" required autocomplete="current-password"
+              placeholder="••••••••"
+              class="t-input w-full px-3 py-2 pr-10 rounded-lg font-mono text-sm" />
+            <button type="button" id="toggle-login-password" tabindex="-1"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 t-text-muted hover:text-cyan" aria-label="Tampilkan/sembunyikan password">
+              <svg id="login-eye-open" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <svg id="login-eye-closed" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12c1.292 4.338 5.31 7.5 10.066 7.5.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="login-modal-error" class="hidden text-xs font-mono px-3 py-2 rounded-lg" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#EF4444;"></div>
+
+        <div class="flex gap-2 justify-end pt-2">
+          <button id="login-modal-cancel" type="button" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold t-text-secondary t-card-inner" style="border:1px solid var(--border-soft);">Batal</button>
+          <button type="submit" id="login-modal-submit" class="px-4 py-2 rounded-lg text-xs font-mono font-semibold flex items-center gap-2"
+            style="background:linear-gradient(135deg,#00D4B4 0%,#00A890 100%);color:#0A0F1E;">
+            <span id="login-modal-submit-text">Masuk</span>
+            <svg id="login-modal-spinner" class="hidden animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          </button>
         </div>
       </form>
     </div>

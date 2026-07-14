@@ -332,3 +332,53 @@ html.light .bar-track { background: #E2E8F0; }
   color: var(--text-faint);
   font-style: italic;
 }
+
+/* ══════════════════════════════════════════════════════════
+   ROLE SELECT SCREEN — Gerbang pilih peran (Admin / Masyarakat)
+   ══════════════════════════════════════════════════════════ */
+#role-select-screen {
+  background-color: var(--bg-page);
+  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+#role-card-masyarakat,
+#role-card-admin {
+  cursor: pointer;
+}
+#role-card-masyarakat:hover {
+  border-color: #00D4B4;
+  box-shadow: 0 10px 32px rgba(0,212,180,0.18);
+}
+#role-card-admin:hover {
+  border-color: #EAB308;
+  box-shadow: 0 10px 32px rgba(234,179,8,0.18);
+}
+
+#theme-toggle-landing:hover { transform: scale(1.08); }
+#theme-toggle-landing:active { transform: scale(0.95); }
+html.dark  #icon-sun-landing  { opacity: 1; }
+html.dark  #icon-moon-landing { opacity: 0; }
+html.light #icon-sun-landing  { opacity: 0; }
+html.light #icon-moon-landing { opacity: 1; }
+
+@keyframes roleScreenFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+#role-select-screen.fading-out {
+  animation: roleScreenFadeOut 0.25s ease forwards;
+  pointer-events: none;
+}
+@keyframes appShellFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#app-shell:not(.hidden) {
+  animation: appShellFadeIn 0.35s ease;
+}
+
+/* Admin-only elements are toggled via JS (role-based visibility) */
+.admin-only-el.role-hidden {
+  display: none !important;
+}

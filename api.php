@@ -2,19 +2,38 @@
 /* ============================================================
    api.php — SPK Kualitas Air | Backend API (PDO + MySQL)
    Endpoint terpadu untuk:
-     - GET  ?action=history   -> ambil semua riwayat pemeriksaan (terbaru dulu)
-     - POST ?action=history   -> simpan satu riwayat pemeriksaan baru (menerima id_depot)
-     - GET  ?action=depot     -> ambil seluruh data depot (data_depot)
-     - POST ?action=depot     -> simpan data depot baru
-     - GET  ?action=bobot     -> ambil bobot kriteria (id_pengaturan = 1)
-     - POST ?action=bobot     -> update bobot kriteria (id_pengaturan = 1)
-     - (bonus) POST ?action=reset_history -> hapus seluruh riwayat
+     - POST ?action=login        -> login admin (username, password)
+     - POST ?action=logout       -> logout admin (hapus sesi)
+     - GET  ?action=check_session -> cek status sesi admin saat ini
+     - GET  ?action=history   -> ambil semua riwayat pemeriksaan (terbaru dulu)   [publik]
+     - POST ?action=history   -> simpan satu riwayat pemeriksaan baru            [publik]
+     - GET  ?action=depot     -> ambil seluruh data depot (data_depot)           [publik]
+     - POST ?action=depot     -> simpan data depot baru                         [BUTUH LOGIN]
+     - GET  ?action=bobot     -> ambil bobot kriteria (id_pengaturan = 1)        [publik]
+     - POST ?action=bobot     -> update bobot kriteria (id_pengaturan = 1)       [BUTUH LOGIN]
+     - (bonus) POST ?action=reset_history -> hapus seluruh riwayat              [BUTUH LOGIN]
    ============================================================ */
+
+/* --- Sesi harus dimulai SEBELUM ada output apa pun --- */
+session_set_cookie_params([
+    "lifetime" => 0,        // habis saat browser ditutup
+    "path"     => "/",
+    "httponly" => true,     // tidak bisa dibaca lewat JS (mencegah XSS mencuri sesi)
+    "samesite" => "Lax",
+    // "secure" => true,     // aktifkan ini jika situs sudah pakai HTTPS
+]);
+session_start();
 
 header("Content-Type: application/json; charset=utf-8");
 
-/* --- Izinkan akses dari origin lain saat development (opsional) --- */
-header("Access-Control-Allow-Origin: *");
+/* --- Izinkan akses dari origin lain saat development (opsional) ---
+   CATATAN: Access-Control-Allow-Origin harus SPESIFIK (bukan "*") agar
+   cookie sesi (kredensial) bisa ikut terkirim lintas origin. Untuk
+   pemakaian normal (frontend & api.php di server yang sama), header
+   CORS di bawah ini tidak berpengaruh karena request dianggap same-origin. */
+$allowedOrigin = $_SERVER["HTTP_ORIGIN"] ?? "*";
+header("Access-Control-Allow-Origin: {$allowedOrigin}");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
@@ -84,6 +103,19 @@ function getJsonBody(): array {
     return is_array($data) ? $data : [];
 }
 
+/** True jika sesi admin sedang login. */
+function isLoggedIn(): bool {
+    return !empty($_SESSION["admin_logged_in"]) && $_SESSION["admin_logged_in"] === true;
+}
+
+/** Wajibkan login sebelum lanjut; hentikan request dengan 401 jika belum login.
+ *  Dipakai HANYA di action CRUD admin (tambah depot, ubah bobot, reset riwayat). */
+function requireLogin(): void {
+    if (!isLoggedIn()) {
+        respond(["success" => false, "message" => "Sesi tidak valid. Silakan login kembali."], 401);
+    }
+}
+
 $action = $_GET["action"] ?? "";
 $method = $_SERVER["REQUEST_METHOD"];
 
@@ -91,7 +123,56 @@ $method = $_SERVER["REQUEST_METHOD"];
    3. ROUTING
    ══════════════════════════════════════════════════════════ */
 
-/* ---------- 3.A GET: Ambil semua riwayat pemeriksaan ---------- */
+/* ---------- 3.0.A POST: Login admin ---------- */
+if ($method === "POST" && $action === "login") {
+    $body = getJsonBody();
+    $username = trim((string) ($body["username"] ?? ""));
+    $password = (string) ($body["password"] ?? "");
+
+    if ($username === "" || $password === "") {
+        respond(["success" => false, "message" => "Username dan password wajib diisi."], 400);
+    }
+
+    $stmt = $pdo->prepare("SELECT id_admin, username, password_hash FROM admin WHERE username = :u LIMIT 1");
+    $stmt->bindValue(":u", $username);
+    $stmt->execute();
+    $row = $stmt->fetch();
+
+    // Selalu jalankan password_verify walau username tidak ditemukan (pakai dummy hash)
+    // agar waktu respons tidak membocorkan apakah username terdaftar di DB.
+    $dummyHash = '$2y$10$C6UzMDM.H6dfI/f/IKcEeO0kD9AtQmvqEG5Fx2E8Nk8Rk5v6E9Yy2';
+    $hash = $row["password_hash"] ?? $dummyHash;
+    $valid = password_verify($password, $hash);
+
+    if (!$row || !$valid) {
+        respond(["success" => false, "message" => "Username atau password salah."], 401);
+    }
+
+    session_regenerate_id(true); // cegah session fixation
+    $_SESSION["admin_logged_in"] = true;
+    $_SESSION["admin_id"]        = (int) $row["id_admin"];
+    $_SESSION["admin_username"]  = $row["username"];
+
+    respond(["success" => true, "message" => "Login berhasil.", "username" => $row["username"]]);
+}
+
+/* ---------- 3.0.B POST: Logout admin ---------- */
+if ($method === "POST" && $action === "logout") {
+    $_SESSION = [];
+    session_destroy();
+    respond(["success" => true, "message" => "Logout berhasil."]);
+}
+
+/* ---------- 3.0.C GET: Cek status sesi admin saat ini ---------- */
+if ($method === "GET" && $action === "check_session") {
+    respond([
+        "success"   => true,
+        "logged_in" => isLoggedIn(),
+        "username"  => $_SESSION["admin_username"] ?? null,
+    ]);
+}
+
+/* ---------- 3.A GET: Ambil semua riwayat pemeriksaan (PUBLIK) ---------- */
 if ($method === "GET" && $action === "history") {
     $stmt = $pdo->query(
         "SELECT r.id_pemeriksaan, r.waktu_pemeriksaan, r.nilai_ph, r.nilai_tds,
@@ -177,8 +258,9 @@ if ($method === "GET" && $action === "depot") {
     respond(["success" => true, "data" => $rows]);
 }
 
-/* ---------- 3.D POST: Simpan data depot baru ---------- */
+/* ---------- 3.D POST: Simpan data depot baru (WAJIB LOGIN) ---------- */
 if ($method === "POST" && $action === "depot") {
+    requireLogin();
     $body = getJsonBody();
 
     $nama   = trim((string) ($body["nama_depot"]   ?? ""));
@@ -233,8 +315,9 @@ if ($method === "GET" && $action === "bobot") {
     ]);
 }
 
-/* ---------- 3.F POST: Update bobot kriteria (khusus id_pengaturan = 1) ---------- */
+/* ---------- 3.F POST: Update bobot kriteria (khusus id_pengaturan = 1) (WAJIB LOGIN) ---------- */
 if ($method === "POST" && $action === "bobot") {
+    requireLogin();
     $body = getJsonBody();
 
     $bPh   = $body["bobot_ph"]   ?? null;
@@ -263,6 +346,7 @@ if ($method === "POST" && $action === "bobot") {
    Anda sudah ada — endpoint ini menjaga fitur itu tetap berfungsi setelah
    migrasi ke MySQL. Hapus blok ini jika tidak ingin menyediakannya. */
 if ($method === "POST" && $action === "reset_history") {
+    requireLogin();
     // TRUNCATE menghapus seluruh baris SEKALIGUS mengembalikan AUTO_INCREMENT
     // ke 1 — beda dengan DELETE yang cuma menghapus isi baris tanpa
     // mereset penghitung id_pemeriksaan.

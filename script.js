@@ -137,6 +137,192 @@ function fireConfetti() {
 /** Base URL endpoint backend PHP (lihat api.php). */
 const API_BASE = "api.php";
 
+/* ══════════════════════════════════════════════════════════
+   0.B AUTENTIKASI ADMIN
+   Login hanya diwajibkan untuk aksi CRUD admin (tambah depot,
+   ubah bobot kriteria, reset riwayat). Melihat dashboard/riwayat
+   tetap bisa diakses siapa saja tanpa login.
+   ══════════════════════════════════════════════════════════ */
+
+/** @type {boolean} Status login admin saat ini (diisi oleh checkAdminSession). */
+let isAdminLoggedIn = false;
+
+/** @type {(() => void)|null} Aksi tertunda yang akan dijalankan otomatis setelah login berhasil. */
+let pendingAdminAction = null;
+
+/**
+ * Wrapper di atas fetch() yang otomatis menyertakan cookie sesi
+ * dan menangani respons 401 (sesi habis/tidak login) secara seragam.
+ */
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, { ...options, credentials: "include" });
+  if (res.status === 401) {
+    isAdminLoggedIn = false;
+    updateAdminAuthUI();
+    showToast("Sesi admin berakhir. Silakan login kembali.", "warn");
+    openLoginModal("Sesi Anda telah berakhir, silakan login kembali.");
+    throw new Error("UNAUTHORIZED");
+  }
+  return res;
+}
+
+/** Perbarui tampilan header (tombol Login Admin vs info + tombol Logout). */
+function updateAdminAuthUI(username = null) {
+  const loginBtn = document.getElementById("btn-admin-login");
+  const loggedInfo = document.getElementById("admin-logged-info");
+  const usernameLabel = document.getElementById("admin-username-label");
+
+  if (isAdminLoggedIn) {
+    loginBtn?.classList.add("hidden");
+    loggedInfo?.classList.remove("hidden");
+    loggedInfo?.classList.add("flex");
+    if (usernameLabel && username) usernameLabel.textContent = username;
+  } else {
+    loginBtn?.classList.remove("hidden");
+    loggedInfo?.classList.add("hidden");
+    loggedInfo?.classList.remove("flex");
+  }
+}
+
+/** Cek status sesi admin ke server saat halaman dimuat. */
+async function checkAdminSession() {
+  try {
+    const res = await fetch(`${API_BASE}?action=check_session`, { credentials: "include" });
+    const json = await res.json();
+    isAdminLoggedIn = !!(json.success && json.logged_in);
+    updateAdminAuthUI(json.username);
+  } catch (err) {
+    console.error(err);
+    isAdminLoggedIn = false;
+    updateAdminAuthUI();
+  }
+}
+document.addEventListener("DOMContentLoaded", checkAdminSession);
+
+/**
+ * Blokir aksi admin jika belum login: buka modal login dan (opsional) simpan
+ * aksi yang tertunda agar otomatis dijalankan begitu login berhasil.
+ * @param {string} actionLabel - Teks alasan, mis. "menambah depot baru".
+ * @param {(() => void)|null} onSuccess - Callback yang dijalankan otomatis setelah login berhasil.
+ */
+function requireAdminOrRedirect(actionLabel = "melakukan aksi ini", onSuccess = null) {
+  if (isAdminLoggedIn) return true;
+  pendingAdminAction = onSuccess;
+  openLoginModal(`Login sebagai admin diperlukan untuk ${actionLabel}.`);
+  return false;
+}
+
+/* ── Modal Login Admin ── */
+const loginModal = document.getElementById("login-modal");
+const loginForm = document.getElementById("login-form");
+const loginModalSubtitle = document.getElementById("login-modal-subtitle");
+const loginModalError = document.getElementById("login-modal-error");
+const loginModalSubmit = document.getElementById("login-modal-submit");
+const loginModalSubmitText = document.getElementById("login-modal-submit-text");
+const loginModalSpinner = document.getElementById("login-modal-spinner");
+
+function openLoginModal(subtitle = "Masukkan username dan password admin.") {
+  if (loginModalSubtitle) loginModalSubtitle.textContent = subtitle;
+  hideLoginModalError();
+  loginModal?.classList.remove("hidden");
+  loginModal?.classList.add("flex");
+  document.getElementById("login-username")?.focus();
+}
+function closeLoginModal() {
+  loginModal?.classList.add("hidden");
+  loginModal?.classList.remove("flex");
+  loginForm?.reset();
+  pendingAdminAction = null;
+}
+function showLoginModalError(msg) {
+  if (!loginModalError) return;
+  loginModalError.textContent = msg;
+  loginModalError.classList.remove("hidden");
+}
+function hideLoginModalError() {
+  loginModalError?.classList.add("hidden");
+}
+function setLoginModalLoading(loading) {
+  if (loginModalSubmit) { loginModalSubmit.disabled = loading; loginModalSubmit.style.opacity = loading ? "0.7" : "1"; }
+  if (loginModalSubmitText) loginModalSubmitText.textContent = loading ? "Memeriksa…" : "Masuk";
+  loginModalSpinner?.classList.toggle("hidden", !loading);
+}
+
+document.getElementById("btn-admin-login")?.addEventListener("click", () => openLoginModal());
+document.getElementById("login-modal-close")?.addEventListener("click", closeLoginModal);
+document.getElementById("login-modal-cancel")?.addEventListener("click", closeLoginModal);
+loginModal?.addEventListener("click", (e) => { if (e.target === loginModal) closeLoginModal(); });
+
+/* Tampil/sembunyikan password di modal login */
+const loginPwInput = document.getElementById("login-password");
+const loginEyeOpen = document.getElementById("login-eye-open");
+const loginEyeClosed = document.getElementById("login-eye-closed");
+document.getElementById("toggle-login-password")?.addEventListener("click", () => {
+  const show = loginPwInput.type === "password";
+  loginPwInput.type = show ? "text" : "password";
+  loginEyeOpen?.classList.toggle("hidden", show);
+  loginEyeClosed?.classList.toggle("hidden", !show);
+});
+
+/* Submit form login */
+loginForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  hideLoginModalError();
+
+  const username = document.getElementById("login-username")?.value.trim();
+  const password = document.getElementById("login-password")?.value;
+
+  if (!username || !password) {
+    showLoginModalError("Username dan password wajib diisi.");
+    return;
+  }
+
+  setLoginModalLoading(true);
+  try {
+    const res = await fetch(`${API_BASE}?action=login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ username, password }),
+    });
+    const json = await res.json();
+
+    if (!json.success) {
+      showLoginModalError(json.message || "Username atau password salah.");
+      setLoginModalLoading(false);
+      return;
+    }
+
+    isAdminLoggedIn = true;
+    updateAdminAuthUI(json.username);
+    showToast(`Selamat datang, ${json.username}.`, "success");
+
+    const action = pendingAdminAction;
+    pendingAdminAction = null;
+    closeLoginModal();
+    setLoginModalLoading(false);
+
+    if (typeof action === "function") action(); // lanjutkan aksi yang tadinya diblokir
+  } catch (err) {
+    console.error(err);
+    showLoginModalError("Tidak dapat menghubungi server. Coba lagi.");
+    setLoginModalLoading(false);
+  }
+});
+
+/** Tombol Logout admin. */
+document.getElementById("btn-admin-logout")?.addEventListener("click", async () => {
+  try {
+    await apiFetch(`${API_BASE}?action=logout`, { method: "POST" });
+  } catch (err) {
+    // apiFetch sudah menangani modal login jika perlu; abaikan error lain.
+  } finally {
+    isAdminLoggedIn = false;
+    updateAdminAuthUI();
+    showToast("Berhasil logout.", "success");
+  }
+});
+
 /** @type {Array<{id:string, ts:string, ph:number, tds:number, turb:number, v:number, label:string, color:string}>} */
 let historyLog = [];
 
@@ -157,7 +343,7 @@ async function addHistoryEntry(ph, tds, turb, v, status) {
   }
 
   try {
-    const res = await fetch(`${API_BASE}?action=history`, {
+    const res = await apiFetch(`${API_BASE}?action=history`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ph, tds, turb, v, status_kelayakan: status.label, id_depot: idDepot }),
@@ -206,7 +392,7 @@ function passesHistoryFilter(entry) {
 
 async function renderHistory(animateFirst = false) {
   try {
-    const res = await fetch(`${API_BASE}?action=history`);
+    const res = await apiFetch(`${API_BASE}?action=history`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Gagal memuat riwayat.");
 
@@ -429,13 +615,13 @@ document.getElementById("btn-export-pdf")?.addEventListener("click", () => {
 /** Hapus seluruh riwayat (di server/database, lewat api.php) */
 async function resetHistory() {
   try {
-    const res = await fetch(`${API_BASE}?action=reset_history`, { method: "POST" });
+    const res = await apiFetch(`${API_BASE}?action=reset_history`, { method: "POST" });
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Gagal menghapus riwayat.");
     await renderHistory();
   } catch (err) {
     console.error(err);
-    showToast("Gagal menghapus riwayat di server.", "error");
+    if (err.message !== "UNAUTHORIZED") showToast("Gagal menghapus riwayat di server.", "error");
   }
 }
 
@@ -456,7 +642,7 @@ const depotSelect = document.getElementById("depot-select");
 async function loadDepotOptions(selectIdAfterLoad = null) {
   if (!depotSelect) return;
   try {
-    const res = await fetch(`${API_BASE}?action=depot`);
+    const res = await apiFetch(`${API_BASE}?action=depot`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Gagal memuat data depot.");
 
@@ -503,6 +689,7 @@ const depotModal = document.getElementById("depot-modal");
 const depotForm = document.getElementById("depot-form");
 
 function openDepotModal() {
+  if (!requireAdminOrRedirect("menambah depot baru", openDepotModal)) return;
   depotModal?.classList.remove("hidden");
   depotModal?.classList.add("flex");
   document.getElementById("depot-nama")?.focus();
@@ -539,7 +726,7 @@ depotForm?.addEventListener("submit", async (e) => {
   if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = "0.7"; }
 
   try {
-    const res = await fetch(`${API_BASE}?action=depot`, {
+    const res = await apiFetch(`${API_BASE}?action=depot`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nama_depot, alamat_depot, kontak }),
@@ -552,14 +739,15 @@ depotForm?.addEventListener("submit", async (e) => {
     showToast(`Depot "${nama_depot}" berhasil ditambahkan.`, "success");
   } catch (err) {
     console.error(err);
-    showToast("Gagal menyimpan depot ke server.", "error");
+    if (err.message !== "UNAUTHORIZED") showToast("Gagal menyimpan depot ke server.", "error");
   } finally {
     if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = "1"; }
   }
 });
 
 /* Tombol Reset Riwayat */
-document.getElementById("btn-reset-history")?.addEventListener("click", async () => {
+async function handleResetHistoryClick() {
+  if (!requireAdminOrRedirect("menghapus riwayat pemeriksaan", handleResetHistoryClick)) return;
   if (historyLog.length === 0) {
     showToast("Belum ada riwayat untuk dihapus.", "info");
     return;
@@ -569,7 +757,8 @@ document.getElementById("btn-reset-history")?.addEventListener("click", async ()
     await resetHistory();
     showToast("Seluruh riwayat berhasil dihapus.", "success");
   }
-});
+}
+document.getElementById("btn-reset-history")?.addEventListener("click", handleResetHistoryClick);
 
 /* ══════════════════════════════════════════════════════════ */
 
@@ -683,7 +872,7 @@ const weightLabels = {
 /** Ambil bobot tersimpan dari server saat halaman dimuat, lalu set posisi slider + W. */
 async function loadWeightsFromServer() {
   try {
-    const res = await fetch(`${API_BASE}?action=bobot`);
+    const res = await apiFetch(`${API_BASE}?action=bobot`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Gagal memuat bobot.");
 
@@ -704,10 +893,22 @@ async function loadWeightsFromServer() {
 }
 document.addEventListener("DOMContentLoaded", loadWeightsFromServer);
 
-/** Kirim bobot ke server; di-debounce agar tidak spam request selama slider masih digeser. */
+/** @type {boolean} Agar peringatan "belum login" untuk bobot cukup ditampilkan sekali. */
+let weightLoginWarnShown = false;
+
+/** Kirim bobot ke server; di-debounce agar tidak spam request selama slider masih digeser.
+ *  Slider tetap bisa digeser siapa saja untuk pratinjau lokal, tapi perubahan hanya
+ *  TERSIMPAN ke database jika sedang login sebagai admin. */
 const saveWeightsToServer = debounce(async () => {
+  if (!isAdminLoggedIn) {
+    if (!weightLoginWarnShown) {
+      showToast("Perubahan bobot ini hanya pratinjau — login sebagai admin agar tersimpan permanen.", "info");
+      weightLoginWarnShown = true;
+    }
+    return;
+  }
   try {
-    const res = await fetch(`${API_BASE}?action=bobot`, {
+    const res = await apiFetch(`${API_BASE}?action=bobot`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bobot_ph: W.pH, bobot_tds: W.tds, bobot_turb: W.turb }),
@@ -716,7 +917,7 @@ const saveWeightsToServer = debounce(async () => {
     if (!json.success) throw new Error(json.message || "Gagal menyimpan bobot.");
   } catch (err) {
     console.error(err);
-    showToast("Gagal menyimpan bobot ke server.", "error");
+    if (err.message !== "UNAUTHORIZED") showToast("Gagal menyimpan bobot ke server.", "error");
   }
 }, 600); // request UPDATE terkirim 600ms setelah slider berhenti digeser
 
@@ -1687,3 +1888,167 @@ document.getElementById("btn-reset")?.addEventListener("click", () => {
 
     showToast("Nilai input dikembalikan ke default.", "info");
   });
+
+/* ══════════════════════════════════════════════════════════
+   9. ROLE SELECTION — Admin vs Masyarakat
+   Layar pilih peran tampil pertama kali. Masyarakat langsung
+   masuk tanpa login (hanya bisa melihat + Live Preview, tidak
+   tersimpan ke database). Admin harus login (username & password)
+   lewat modal login yang sudah ada, lalu mendapat akses penuh.
+   ══════════════════════════════════════════════════════════ */
+
+const ROLE_STORAGE_KEY = "spk-role";
+/** @type {'admin'|'masyarakat'|null} Peran aktif saat ini. */
+let currentRole = null;
+
+const roleSelectScreen = document.getElementById("role-select-screen");
+const appShell = document.getElementById("app-shell");
+const roleBadge = document.getElementById("role-badge");
+const roleBadgeLabel = document.getElementById("role-badge-label");
+const roleBadgeIconMasyarakat = document.getElementById("role-badge-icon-masyarakat");
+const roleBadgeIconAdmin = document.getElementById("role-badge-icon-admin");
+const btnSwitchRole = document.getElementById("btn-switch-role");
+const infoBannerText = document.getElementById("info-banner-text");
+const masyarakatHitungNote = document.getElementById("masyarakat-hitung-note");
+
+/** Sembunyikan layar pilih peran & tampilkan dashboard. */
+function revealAppShell() {
+  roleSelectScreen?.classList.add("fading-out");
+  setTimeout(() => {
+    roleSelectScreen?.classList.add("hidden");
+    roleSelectScreen?.classList.remove("fading-out");
+    appShell?.classList.remove("hidden");
+  }, 200);
+}
+
+/** Tampilkan kembali layar pilih peran & sembunyikan dashboard. */
+function revealRoleScreen() {
+  appShell?.classList.add("hidden");
+  roleSelectScreen?.classList.remove("hidden");
+}
+
+/**
+ * Terapkan seluruh pembatasan/perluasan UI berdasarkan peran aktif.
+ * @param {'admin'|'masyarakat'} role
+ */
+function applyRoleUI(role) {
+  currentRole = role;
+  const isAdmin = role === "admin";
+
+  /* Badge peran di header */
+  roleBadge?.classList.toggle("hidden", false);
+  roleBadge?.classList.toggle("flex", true);
+  if (roleBadgeLabel) roleBadgeLabel.textContent = isAdmin ? "Admin" : "Masyarakat";
+  roleBadgeIconAdmin?.classList.toggle("hidden", !isAdmin);
+  roleBadgeIconMasyarakat?.classList.toggle("hidden", isAdmin);
+
+  /* Elemen khusus admin (Tambah Depot, Reset Riwayat, dll) */
+  document.querySelectorAll(".admin-only-el").forEach((elm) => {
+    elm.classList.toggle("role-hidden", !isAdmin);
+  });
+
+  /* Tombol "Hitung Kelayakan" (menyimpan ke database) hanya untuk admin.
+     Masyarakat memakai Live Preview saja. */
+  const btnHitung = document.getElementById("btn-hitung");
+  btnHitung?.classList.toggle("hidden", !isAdmin);
+  masyarakatHitungNote?.classList.toggle("hidden", isAdmin);
+
+  /* Untuk Masyarakat: paksa Live Preview selalu aktif & kunci togglenya
+     agar mereka tetap bisa mencoba simulasi tanpa perlu klik apa pun lagi. */
+  if (livePreviewToggle) {
+    if (!isAdmin) {
+      livePreviewToggle.checked = true;
+      livePreviewToggle.disabled = true;
+      liveToggleTrack?.classList.add("active");
+      liveToggleThumb?.classList.add("active");
+      runLiveCalculation();
+    } else {
+      livePreviewToggle.disabled = false;
+    }
+  }
+
+  /* Perbarui teks banner info di atas dashboard */
+  if (infoBannerText) {
+    infoBannerText.innerHTML = isAdmin
+      ? 'Mode Admin — masukkan nilai sensor, lalu klik <strong class="text-cyan font-semibold">Hitung Kelayakan</strong> untuk menghitung skor Vektor V (metode Weighted Product) dan menyimpannya ke riwayat.'
+      : 'Mode Masyarakat — ubah nilai sensor untuk melihat hasil simulasi kelayakan secara <strong class="text-cyan font-semibold">Live Preview</strong>. Hasil simulasi tidak tersimpan ke database.';
+  }
+
+  updateAdminAuthUI();
+}
+
+/**
+ * Masuk ke dashboard sebagai peran tertentu.
+ * @param {'admin'|'masyarakat'} role
+ */
+function enterApp(role) {
+  sessionStorage.setItem(ROLE_STORAGE_KEY, role);
+  applyRoleUI(role);
+  revealAppShell();
+}
+
+/* ── Kartu "Masyarakat" — langsung masuk tanpa login ── */
+document.getElementById("role-card-masyarakat")?.addEventListener("click", () => {
+  enterApp("masyarakat");
+  showToast("Masuk sebagai Masyarakat — mode lihat & simulasi Live Preview.", "info", 2600);
+});
+
+/* ── Kartu "Admin" — buka modal login, lanjut ke dashboard setelah berhasil ── */
+document.getElementById("role-card-admin")?.addEventListener("click", () => {
+  pendingAdminAction = () => enterApp("admin");
+  openLoginModal("Masukkan username dan password admin untuk melanjutkan.");
+});
+
+/* ── Tombol "Ganti Peran" di header — kembali ke layar pilih peran ── */
+btnSwitchRole?.addEventListener("click", () => {
+  sessionStorage.removeItem(ROLE_STORAGE_KEY);
+  revealRoleScreen();
+});
+
+/* ── Tombol tema pada layar pilih peran (sebelum masuk dashboard) ── */
+document.getElementById("theme-toggle-landing")?.addEventListener("click", toggleTheme);
+
+/* ── Jika admin login lewat header (setelah sudah berada di dashboard
+     sebagai Masyarakat), naikkan peran menjadi Admin secara otomatis ── */
+loginForm?.addEventListener("submit", () => {
+  // Jika modal login dibuka bukan dari kartu Admin (mis. dari header saat
+  // sudah berperan Masyarakat), pendingAdminAction mungkin null — pastikan
+  // peran tetap naik ke admin begitu login berhasil.
+  const originalPending = pendingAdminAction;
+  if (!originalPending) {
+    pendingAdminAction = () => applyRoleUI("admin");
+  }
+});
+
+/** Saat admin logout, turunkan kembali ke peran Masyarakat (tanpa keluar dashboard). */
+document.getElementById("btn-admin-logout")?.addEventListener("click", () => {
+  setTimeout(() => {
+    sessionStorage.setItem(ROLE_STORAGE_KEY, "masyarakat");
+    applyRoleUI("masyarakat");
+    showToast("Kembali ke mode Masyarakat.", "info", 2200);
+  }, 50);
+});
+
+/** Inisialisasi peran saat halaman dimuat: pulihkan dari sessionStorage jika ada. */
+(function initRole() {
+  const savedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
+  if (savedRole === "admin" || savedRole === "masyarakat") {
+    applyRoleUI(savedRole);
+    appShell?.classList.remove("hidden");
+    roleSelectScreen?.classList.add("hidden");
+  }
+  // Jika belum ada peran tersimpan, layar pilih peran (default) tetap tampil.
+})();
+
+/** Sinkronisasi: jika peran tersimpan "admin" tapi sesi server ternyata sudah
+ *  habis/tidak valid (checkAdminSession menemukan tidak login), turunkan
+ *  otomatis ke peran Masyarakat agar UI tidak menampilkan akses yang salah. */
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    if (currentRole === "admin" && !isAdminLoggedIn) {
+      sessionStorage.setItem(ROLE_STORAGE_KEY, "masyarakat");
+      applyRoleUI("masyarakat");
+      showToast("Sesi admin tidak ditemukan — kembali ke mode Masyarakat.", "warn");
+    }
+  }, 500);
+});
